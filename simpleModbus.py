@@ -1,6 +1,8 @@
+import pymodbus
+
 from pymodbus.client import ModbusTcpClient
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder, Endian 
-from pymodbus import exceptions, pdu
+from pymodbus import exceptions, pdu 
 
 from pymodbus.server import StartTcpServer, ServerStop
 from pymodbus.datastore import ModbusSequentialDataBlock
@@ -151,8 +153,11 @@ class ModbusClient(ModbusBase):
         if isinstance(response, pdu.ExceptionResponse):
             response = self.get_pdu_exception_cause(response)
             raise exceptions.ModbusException('Received response error. '+response)
-        
-        input_registers = self.decode_binary_registers_to_integer(response=response)
+
+        if isinstance(response, pymodbus.register_read_message.ReadInputRegistersResponse):
+            input_registers = self.decode_binary_registers_to_integer(response=response)
+        else:
+            input_registers = []
 
         dict_input_registers = {}
         for input_register in input_registers:
@@ -184,7 +189,10 @@ class ModbusClient(ModbusBase):
             response = self.get_pdu_exception_cause(response)
             raise exceptions.ModbusException('Received response error. '+response)
 
-        holding_registers = self.decode_binary_registers_to_integer(response=response)
+        if isinstance(response, pymodbus.register_read_message.ReadHoldingRegistersResponse):
+            holding_registers = self.decode_binary_registers_to_integer(response=response)
+        else:
+            holding_registers = []
 
         dict_holding_registers = {}
         for holding_register in holding_registers:
